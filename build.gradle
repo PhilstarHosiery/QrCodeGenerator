@@ -1,0 +1,68 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'idea'
+
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'org.beryx.jlink' version '3.0.1'
+}
+
+version = '1.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.zxing:core:3.5.3'
+    implementation 'com.google.zxing:javase:3.5.3'
+}
+
+application {
+    mainClass = 'com.philstar.app.qrcodegenerator.MainApp'
+    mainModule = 'com.philstar.app.QrCodeGenerator'
+}
+
+javafx {
+    version = '21'
+    modules = ['javafx.controls']
+}
+
+jlink {
+    addExtraDependencies('javafx')
+
+    jpackage {
+        imageName = 'QrCodeGenerator' // No spaces!
+        imageOptions = ['--icon', 'res/qrcode.ico']
+        installerOptions = [
+                '--install-dir', 'PhilstarApp\\QrCodeGenerator',
+                '--win-dir-chooser',
+                '--win-menu',
+                '--win-menu-group', 'Philstar App',
+                '--win-upgrade-uuid', '94609f04-d123-11ee-a506-0242ac120002'
+        ]
+
+        // javaHome = System.getenv('JAVA_HOME')
+        appVersion = "${version}"
+        installerType = 'msi'
+    }
+}
+
+compileJava {
+    options.compilerArgs += ['-Xlint:unchecked']
+
+    doFirst {
+        new File(projectDir, 'src/main/java/gradle/GradleProject.java').text =
+                """
+                package gradle;
+
+                public class GradleProject {
+                    public static String ApplicationVersion = "$version";
+                }
+                """
+    }
+}
