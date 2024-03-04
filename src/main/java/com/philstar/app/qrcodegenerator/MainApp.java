@@ -17,6 +17,8 @@ import java.util.Objects;
 
 public class MainApp extends Application {
     private String typeString;
+    TextField qrStringField;
+    private QrCodeView qrCodeView;
 
     @Override
     public void start(Stage stage) {
@@ -24,33 +26,25 @@ public class MainApp extends Application {
 
 
         // QR Code View
-        QrCodeView qrCodeView = new QrCodeView(200, 200);
+        qrCodeView = new QrCodeView(200, 200);
         borderPane.setCenter(qrCodeView);
+
+        // QR String View
+        qrStringField = new TextField();
+        qrStringField.setEditable(false);
 
 
         // Generate ToolBar
         ToolBar toolBar = new ToolBar();
 
         TextField textField = new TextField();
-        Button generateButton = new Button("Generate");
 
         toolBar.getItems().add(new Label("Text: "));
         toolBar.getItems().add(textField);
-        toolBar.getItems().add(generateButton);
 
         HBox.setHgrow(textField, Priority.ALWAYS);
 
-        generateButton.setOnAction(e -> {
-            String utf8String = textField.getText().strip().replaceAll("\\p{C}", "");
-            // remove non-printable characters
-            String qrString = new String(utf8String.getBytes(), StandardCharsets.ISO_8859_1);
-
-            try {
-                qrCodeView.setCode(typeString + qrString);
-            } catch (WriterException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
+        textField.textProperty().addListener((obs, oldValue, newValue) -> showQrCode(typeString, newValue));
 
 
         // Type ToolBar
@@ -65,13 +59,17 @@ public class MainApp extends Application {
         radioButtonLoading.setSelected(true);
         typeString = "LOADING ";
 
-        radioButtonLoading.setOnAction(e -> typeString = "LOADING ");
-        radioButtonGeneric.setOnAction(e -> typeString = "");
+        radioButtonLoading.setOnAction(e -> {
+            typeString = "LOADING ";
+            showQrCode(typeString, textField.getText());
+        });
+        radioButtonGeneric.setOnAction(e -> {
+            typeString = "";
+            showQrCode(typeString, textField.getText());
+        });
 
         typeToolBar.getItems().add(radioButtonLoading);
         typeToolBar.getItems().add(radioButtonGeneric);
-
-
 
 
         VBox vBox = new VBox();
@@ -79,8 +77,7 @@ public class MainApp extends Application {
         vBox.getChildren().add(typeToolBar);
 
         borderPane.setTop(vBox);
-
-
+        borderPane.setBottom(qrStringField);
 
 
         Scene scene = new Scene(borderPane, 400, 400);
@@ -88,6 +85,8 @@ public class MainApp extends Application {
         stage.setTitle("QR Code Generator " + GradleProject.ApplicationVersion);
         stage.setScene(scene);
         stage.show();
+
+        showQrCode(typeString, textField.getText());
 
 
         // Set icons
@@ -101,6 +100,20 @@ public class MainApp extends Application {
                 MainApp.class.getResourceAsStream("/qrcode64.png"))));
         stage.getIcons().add(new Image(Objects.requireNonNull(
                 MainApp.class.getResourceAsStream("/qrcode256.png"))));
+    }
+
+
+    private void showQrCode(String type, String code) {
+        String utf8String = code.strip().replaceAll("\\p{C}", "");
+        // remove non-printable characters
+        String qrString = new String(utf8String.getBytes(), StandardCharsets.ISO_8859_1);
+
+        try {
+            qrCodeView.setCode(type + qrString);
+            qrStringField.setText(type + qrString);
+        } catch (WriterException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
 

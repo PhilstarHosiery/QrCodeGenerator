@@ -42,6 +42,11 @@ public class QrCodeView extends ImageView {
 
 
     public void setCode(String qrText) throws WriterException {
+        if (qrText.isEmpty()) {
+            this.setImage(new WritableImage(width, height));
+            return;
+        }
+
         Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<>();
         hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
