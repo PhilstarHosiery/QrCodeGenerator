@@ -4,14 +4,14 @@ plugins {
     id 'idea'
 
     id 'org.openjfx.javafxplugin' version '0.1.0'
-    id 'org.beryx.jlink' version '3.0.1'
+    id 'org.beryx.jlink' version '3.1.1'
 }
 
-version = '1.1'
+version = '1.2'
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-}
+//java {
+//    sourceCompatibility = JavaVersion.VERSION_21
+//}
 
 repositories {
     mavenCentral()
@@ -28,7 +28,7 @@ application {
 }
 
 javafx {
-    version = '21'
+    version = '23'
     modules = ['javafx.controls']
 }
 
@@ -57,12 +57,10 @@ compileJava {
 
     doFirst {
         new File(projectDir, 'src/main/java/gradle/GradleProject.java').text =
-                """
-                package gradle;
+                """package gradle;
 
-                public class GradleProject {
-                    public static String ApplicationVersion = "$version";
-                }
-                """
+public class GradleProject {
+    public static String ApplicationVersion = "$version";
+}"""
     }
 }

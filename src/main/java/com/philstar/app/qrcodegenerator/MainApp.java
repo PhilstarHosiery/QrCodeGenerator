@@ -16,14 +16,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 public class MainApp extends Application {
-    private String typeString;
+    // UI Components
     TextField qrStringField;
     private QrCodeView qrCodeView;
+
+    // Current Values
+    private String typeString = "";
+    private String qrText = "";
+    private QrErrorCorrectionLevels.ErrCorLevel errorCorrectionLevel = QrErrorCorrectionLevels.M;
+
 
     @Override
     public void start(Stage stage) {
         BorderPane borderPane = new BorderPane();
-
 
         // QR Code View
         qrCodeView = new QrCodeView(200, 200);
@@ -44,12 +49,17 @@ public class MainApp extends Application {
 
         HBox.setHgrow(textField, Priority.ALWAYS);
 
-        textField.textProperty().addListener((obs, oldValue, newValue) -> showQrCode(typeString, newValue));
+        textField.textProperty().addListener(
+                (_, _, newValue) -> {
+                    qrText = newValue;
+                    showQrCode();
+                });
 
 
-        // Type ToolBar
-        ToolBar typeToolBar = new ToolBar();
+        // Option ToolBar
+        ToolBar optionToolBar = new ToolBar();
 
+        // Type Radio Buttons: LOADING ... | ...
         ToggleGroup toggleGroup = new ToggleGroup();
         RadioButton radioButtonLoading = new RadioButton("LOADING");
         RadioButton radioButtonGeneric = new RadioButton("Generic");
@@ -59,22 +69,37 @@ public class MainApp extends Application {
         radioButtonLoading.setSelected(true);
         typeString = "LOADING ";
 
-        radioButtonLoading.setOnAction(e -> {
+        radioButtonLoading.setOnAction(_ -> {
             typeString = "LOADING ";
-            showQrCode(typeString, textField.getText());
-        });
-        radioButtonGeneric.setOnAction(e -> {
-            typeString = "";
-            showQrCode(typeString, textField.getText());
+            showQrCode();
         });
 
-        typeToolBar.getItems().add(radioButtonLoading);
-        typeToolBar.getItems().add(radioButtonGeneric);
+        radioButtonGeneric.setOnAction(_ -> {
+            typeString = "";
+            showQrCode();
+        });
+
+        // Error Correction Level ComboBox
+        ComboBox<QrErrorCorrectionLevels.ErrCorLevel> errCorLevelComboBox = new ComboBox<>();
+        errCorLevelComboBox.setItems(QrErrorCorrectionLevels.getErrorCorrectionLevels());
+        errCorLevelComboBox.getSelectionModel().select(QrErrorCorrectionLevels.M);
+        errCorLevelComboBox.getSelectionModel().selectedItemProperty().addListener(
+                (_, _, newValue) -> {
+                    errorCorrectionLevel = newValue;
+                    showQrCode();
+                });
+
+        // Build Option ToolBar
+        optionToolBar.getItems().add(radioButtonLoading);
+        optionToolBar.getItems().add(radioButtonGeneric);
+        optionToolBar.getItems().add(new Separator());
+        optionToolBar.getItems().add(new Label("ErrCor: "));
+        optionToolBar.getItems().add(errCorLevelComboBox);
 
 
         VBox vBox = new VBox();
         vBox.getChildren().add(toolBar);
-        vBox.getChildren().add(typeToolBar);
+        vBox.getChildren().add(optionToolBar);
 
         borderPane.setTop(vBox);
         borderPane.setBottom(qrStringField);
@@ -86,7 +111,7 @@ public class MainApp extends Application {
         stage.setScene(scene);
         stage.show();
 
-        showQrCode(typeString, textField.getText());
+        showQrCode();
 
 
         // Set icons
@@ -103,14 +128,16 @@ public class MainApp extends Application {
     }
 
 
-    private void showQrCode(String type, String code) {
-        String utf8String = code.strip().replaceAll("\\p{C}", "");
+    private void showQrCode() {
+        // String type, String code, ErrorCorrectionLevel level
+        String utf8String = qrText.strip().replaceAll("\\p{C}", "");
         // remove non-printable characters
         String qrString = new String(utf8String.getBytes(), StandardCharsets.ISO_8859_1);
 
         try {
-            qrCodeView.setCode(type + qrString);
-            qrStringField.setText(type + qrString);
+            qrCodeView.setCode(typeString + qrString);
+            qrCodeView.setErrorCorrectionLevel(errorCorrectionLevel.level());
+            qrStringField.setText(typeString + qrString);
         } catch (WriterException ex) {
             throw new RuntimeException(ex);
         }

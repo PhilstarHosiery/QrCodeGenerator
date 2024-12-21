@@ -22,6 +22,9 @@ public class QrCodeView extends ImageView {
     private final int width;
     private final int height;
 
+    private String qrCodeText;
+    private ErrorCorrectionLevel errorCorrectionLevel = ErrorCorrectionLevel.M;
+
     public QrCodeView(int width, int height) {
         this.width = width;
         this.height = height;
@@ -41,16 +44,28 @@ public class QrCodeView extends ImageView {
     }
 
 
+    public void setErrorCorrectionLevel(ErrorCorrectionLevel errorCorrectionLevel) throws WriterException {
+        this.errorCorrectionLevel = errorCorrectionLevel;
+        redrawQrCode();
+    }
+
+
     public void setCode(String qrText) throws WriterException {
-        if (qrText.isEmpty()) {
+        this.qrCodeText = qrText;
+        redrawQrCode();
+    }
+
+
+    private void redrawQrCode() throws WriterException {
+        if (qrCodeText.isEmpty()) {
             this.setImage(new WritableImage(width, height));
             return;
         }
 
         Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<>();
-        hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
+        hintMap.put(EncodeHintType.ERROR_CORRECTION, errorCorrectionLevel);
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
-        BitMatrix bitMatrix = qrCodeWriter.encode(qrText, BarcodeFormat.QR_CODE, width, height, hintMap);
+        BitMatrix bitMatrix = qrCodeWriter.encode(qrCodeText, BarcodeFormat.QR_CODE, width, height, hintMap);
 
         WritableImage writableImage = new WritableImage(width, height);
         PixelWriter pw = writableImage.getPixelWriter();
